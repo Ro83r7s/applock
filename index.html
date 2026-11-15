@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AppLock">
+<meta name="theme-color" content="#FDEFF3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#241A1F" media="(prefers-color-scheme: dark)">
+<title>AppLock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg1: #FDEFF3; --bg2: #FCE4EB; --bg3: #FDF1E7;
+  --card: rgba(255,255,255,.72); --card-solid: #FFF8FA;
+  --text: #4A2E3A; --muted: #A0808C; --line: #F0D2DB;
+  --accent: #F6C3D1; --strong: #E58BA6; --good: #5E9A78; --bad: #CF6A80;
+  --blob1: #F9C5D5; --blob2: #FBDCC4;
+  --shadow: 0 10px 30px rgba(190, 110, 135, .14);
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg1: #241A1F; --bg2: #2B1F25; --bg3: #2A2022;
+    --card: rgba(255,255,255,.06); --card-solid: #33262C;
+    --text: #F6DFE6; --muted: #A98793; --line: #4A3540;
+    --accent: #7C4459; --strong: #E58BA6; --good: #8FC9A2; --bad: #EE94A7;
+    --blob1: #5A2E40; --blob2: #4A3328;
+    --shadow: 0 10px 30px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg1: #241A1F; --bg2: #2B1F25; --bg3: #2A2022;
+  --card: rgba(255,255,255,.06); --card-solid: #33262C;
+  --text: #F6DFE6; --muted: #A98793; --line: #4A3540;
+  --accent: #7C4459; --strong: #E58BA6; --good: #8FC9A2; --bad: #EE94A7;
+  --blob1: #5A2E40; --blob2: #4A3328;
+  --shadow: 0 10px 30px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { height: 100%; }
+body {
+  margin: 0; min-height: 100%; color: var(--text);
+  background: linear-gradient(165deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%) fixed;
+  font-family: "Nunito", -apple-system, system-ui, sans-serif;
+  display: flex; justify-content: center;
+  -webkit-tap-highlight-color: transparent; overflow-x: hidden;
+}
+.blob { position: fixed; border-radius: 50%; filter: blur(60px); opacity: .7; pointer-events: none; z-index: 0; }
+.blob.a { width: 260px; height: 260px; background: var(--blob1); top: -80px; right: -90px; animation: drift 16s ease-in-out infinite alternate; }
+.blob.b { width: 300px; height: 300px; background: var(--blob2); bottom: -120px; left: -110px; animation: drift 20s ease-in-out infinite alternate-reverse; }
+@keyframes drift { to { transform: translate(30px, 40px) scale(1.12); } }
+
+main { position: relative; z-index: 1; width: 100%; max-width: 28rem; padding: 2.25rem 1.4rem 2.25rem; display: flex; flex-direction: column; min-height: 100%; }
+[hidden] { display: none !important; }
+.screen { animation: rise .45s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+h1, h2, .display { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-spacing: -.01em; }
+
+.top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; min-height: 1.8rem; }
+.name { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.2rem; }
+.hearts { color: var(--strong); letter-spacing: .12em; font-size: 1.15rem; }
+.hearts.hit { animation: shake .4s ease; }
+@keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.bar { display: flex; gap: .3rem; margin-top: 1rem; }
+.bar i { flex: 1; height: .4rem; border-radius: 999px; background: var(--line); transition: background .4s ease; }
+.bar i.on { background: var(--strong); }
+
+/* Breath */
+.breath { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 70vh; }
+.orb {
+  width: 190px; height: 190px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--accent) 45%, var(--strong) 100%);
+  box-shadow: 0 0 60px var(--accent); animation: breathe 6s ease-in-out forwards;
+}
+@keyframes breathe { 0% { transform: scale(.55); } 50% { transform: scale(1); } 100% { transform: scale(.55); } }
+.breath p { margin: 2.25rem 0 0; font-family: "Fraunces", Georgia, serif; font-size: 1.6rem; }
+.breath small { margin-top: .5rem; color: var(--muted); font-size: .95rem; }
+
+/* Start */
+.hello { margin: 2rem 0 .35rem; font-size: 2.3rem; line-height: 1.1; }
+.sub { color: var(--muted); font-size: 1rem; line-height: 1.45; margin: 0; }
+.modes { display: flex; flex-direction: column; gap: .7rem; margin-top: 1.75rem; }
+.mode {
+  font: inherit; color: var(--text); text-align: left; cursor: pointer; width: 100%;
+  background: var(--card); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--line); border-radius: 1.4rem; padding: 1.05rem 1.2rem; box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 1rem; transition: transform .12s ease;
+}
+.mode:active { transform: scale(.98); }
+.mode .ico { width: 2.9rem; height: 2.9rem; border-radius: 50%; background: var(--accent); display: grid; place-items: center; font-size: 1.35rem; flex: none; }
+.mode b { display: block; font-family: "Fraunces", Georgia, serif; font-size: 1.3rem; font-weight: 600; }
+.mode span.d { color: var(--muted); font-size: .92rem; }
+.resist {
+  margin-top: 1.1rem; font: inherit; font-weight: 800; font-size: 1.08rem; width: 100%; cursor: pointer;
+  padding: 1.05rem; border-radius: 999px; border: none; color: #fff;
+  background: linear-gradient(135deg, var(--strong), #D9799A); box-shadow: 0 10px 24px rgba(229,139,166,.4);
+}
+.resist:active { transform: scale(.98); }
+.stats { margin-top: 1.5rem; display: flex; gap: .6rem; }
+.stat { flex: 1; background: var(--card); border: 1px solid var(--line); border-radius: 1.1rem; padding: .75rem .5rem; text-align: center; }
+.stat b { display: block; font-family: "Fraunces", Georgia, serif; font-size: 1.45rem; }
+.stat span { color: var(--muted); font-size: .78rem; line-height: 1.2; display: block; }
+.rules { margin-top: 1.25rem; color: var(--muted); font-size: .85rem; line-height: 1.5; }
+.rules summary { cursor: pointer; font-weight: 700; }
+.rules p { margin: .4rem 0 0; }
+
+/* Quiz */
+.qcard { margin-top: 1.5rem; background: var(--card); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 1.5rem; padding: 1.25rem 1.2rem 1.3rem; box-shadow: var(--shadow); }
+.kind { margin: 0 0 .5rem; color: var(--strong); font-size: .82rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.prompt { font-family: "Fraunces", Georgia, serif; font-size: 1.5rem; line-height: 1.3; font-weight: 600; margin: 0 0 1.1rem; overflow-wrap: anywhere; }
+.built { min-height: 3.8rem; border: 1.5px dashed var(--line); border-radius: 1rem; padding: .8rem 1rem; font-size: 1.2rem; line-height: 1.4; margin-bottom: 1rem; overflow-wrap: anywhere; background: var(--card-solid); }
+.built.full { border-style: solid; border-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chip, .opt {
+  font: inherit; font-size: 1.08rem; color: var(--text); background: var(--card-solid);
+  border: 1.5px solid var(--line); border-radius: 999px; padding: .55rem 1rem; cursor: pointer; transition: transform .1s ease, background .15s ease;
+}
+.chip:active, .opt:active { transform: scale(.96); background: var(--accent); }
+.chip.used { visibility: hidden; }
+.opts { display: flex; flex-direction: column; gap: .55rem; }
+.opt { border-radius: 1rem; text-align: left; padding: .85rem 1.1rem; line-height: 1.35; width: 100%; }
+.opt.right, .chip.right { border-color: var(--good); color: var(--good); }
+.opt.wrong, .chip.wrong { border-color: var(--bad); color: var(--bad); }
+button:disabled { cursor: default; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.feedback { margin-top: .9rem; padding: 1rem 1.1rem; border-radius: 1.2rem; background: var(--card-solid); border: 1px solid var(--line); line-height: 1.45; animation: rise .3s ease both; }
+.feedback .row { display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
+.feedback .res { font-weight: 800; }
+.feedback .res.ok { color: var(--good); }
+.feedback .res.no { color: var(--bad); }
+.feedback .fr { font-family: "Fraunces", Georgia, serif; font-size: 1.2rem; margin-top: .35rem; }
+.feedback .lv { color: var(--muted); }
+.say { font: inherit; font-size: .9rem; font-weight: 700; border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 999px; padding: .35rem .8rem; cursor: pointer; flex: none; }
+.review-tag { display: block; margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; color: var(--muted); }
+.nav { display: flex; gap: .5rem; margin-top: .9rem; }
+.nav button { font: inherit; font-weight: 800; font-size: 1.05rem; border-radius: 999px; padding: .9rem 1.1rem; cursor: pointer; background: var(--card-solid); color: var(--text); border: 1px solid var(--line); }
+.nav .next { flex: 1; background: var(--strong); border-color: var(--strong); color: #fff; }
+.nav button:disabled { opacity: .45; }
+
+/* Center screens */
+.center { margin-top: 2.5rem; text-align: center; }
+.center h2 { font-size: 2.1rem; margin: 0 0 .5rem; line-height: 1.15; }
+.center p { color: var(--muted); margin: 0 0 1.75rem; line-height: 1.5; font-size: 1.08rem; }
+.emoji { font-size: 3.4rem; line-height: 1; margin-bottom: .75rem; animation: pop .7s cubic-bezier(.2,1.6,.4,1) both; }
+.link, .btn { display: block; width: 100%; text-align: center; text-decoration: none; font: inherit; font-size: 1.1rem; font-weight: 800; padding: 1.05rem; border-radius: 999px; margin-bottom: .7rem; cursor: pointer; border: none; }
+.primary { background: linear-gradient(135deg, var(--strong), #D9799A); color: #fff; box-shadow: 0 10px 24px rgba(229,139,166,.4); }
+.secondary { border: 1px solid var(--line) !important; color: var(--text); background: var(--card); }
+.btn:disabled { opacity: .45; }
+.win-title { font-family: "Fraunces", Georgia, serif; font-size: 2.6rem; font-weight: 600; line-height: 1.1; margin: 0 0 .6rem; animation: pop .7s cubic-bezier(.2,1.6,.4,1) both; }
+.win-title .big { display: block; font-size: 3.6rem; color: var(--strong); }
+.win-min { font-family: "Fraunces", Georgia, serif; font-size: 1.3rem; color: var(--text) !important; }
+@keyframes pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 6; }
+.confetti i { position: absolute; top: -24px; width: 10px; height: 14px; border-radius: 3px; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(112vh) rotate(720deg); } }
+
+/* Clown */
+.clown-layer { position: fixed; inset: 0; z-index: 5; background: linear-gradient(165deg, var(--bg1), var(--bg2) 55%, var(--bg3)); }
+.clown-head { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 1.25rem); left: 0; right: 0; text-align: center; padding: 0 1.5rem; }
+.clown-head b { display: block; font-family: "Fraunces", Georgia, serif; font-size: 1.7rem; }
+.clown-head span { color: var(--muted); font-size: 1rem; }
+.clown-cancel { position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 1.25rem); left: 50%; transform: translateX(-50%); font: inherit; color: var(--muted); background: none; border: none; font-size: 1rem; cursor: pointer; text-decoration: underline; white-space: nowrap; }
+.clown { position: absolute; width: 108px; height: 108px; border-radius: 50%; border: none; padding: 0; cursor: pointer; background: var(--clown, #E63946); box-shadow: 0 8px 22px rgba(0,0,0,.2), inset 0 -6px 0 rgba(0,0,0,.12); transition: left .3s cubic-bezier(.3,1.4,.5,1), top .3s cubic-bezier(.3,1.4,.5,1), background .25s ease, opacity .2s ease; }
+.clown:not(:disabled) { animation: wobble 1.2s ease-in-out infinite; }
+@keyframes wobble { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+.clown:disabled { opacity: .45; cursor: default; }
+.clown svg { width: 100%; height: 100%; display: block; }
+.clown .wait { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2.1rem; font-weight: 800; color: #fff; text-shadow: 0 1px 5px rgba(0,0,0,.5); }
+.foot { margin-top: auto; padding-top: 1.75rem; color: var(--muted); font-size: .85rem; text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+  .blob, .screen, .orb, .win-title, .emoji, .confetti i, .clown, .feedback, .hearts.hit { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="blob a"></div><div class="blob b"></div>
+<main>
+  <div class="top">
+    <span class="name">AppLock</span>
+    <span class="hearts" id="hearts" hidden></span>
+  </div>
+  <div class="bar" id="bar" hidden></div>
+
+  <!-- BREATH -->
+  <section class="breath screen" id="breath">
+    <div class="orb"></div>
+    <p id="breathText">Ieelpo…</p>
+    <small>Paņem prāta pauzi pirms mehāniskas aplikācijas atvēršanas.</small>
+  </section>
+
+  <!-- START -->
+  <section class="screen" id="start" hidden>
+    <h1 class="hello" id="hello">Pauze.</h1>
+    <p class="sub" id="helloSub">Vai tiešām vajag, vai tas ir tikai ieradums?</p>
+
+    <button class="resist" type="button" id="resistBtn">Man tomēr nevajag</button>
+
+    <div class="modes">
+      <button class="mode" type="button" data-mode="short"><span class="ico">☕</span><span><b>10 minūtes</b><span class="d">3 jautājumi</span></span></button>
+      <button class="mode" type="button" data-mode="long"><span class="ico">🌿</span><span><b>3 stundas</b><span class="d">9 jautājumi</span></span></button>
+      <button class="mode" type="button" data-mode="clown"><span class="ico">🤡</span><span><b>Ātri palaist garām</b><span class="d">9 stundas · 15 klikšķi uz klauna</span></span></button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b id="sResist">0</b><span>šodien atturējies</span></div>
+      <div class="stat"><b id="sMin">0</b><span>minūtes nopelnītas</span></div>
+      <div class="stat"><b id="sLearn">0</b><span>frāzes apgūtas</span></div>
+    </div>
+
+    <details class="rules">
+      <summary>Noteikumi</summary>
+      <p>Tev ir 3 dzīvības. Katra kļūda atņem vienu.</p>
+      <p>Pēc atbildes poga „Tālāk” atveras pēc 5 sekundēm. Ar bultiņām vari apskatīt iepriekšējos jautājumus.</p>
+      <p>Frāzes ir B1 līmenī, gramatika A1 līmenī. Kļūdainās frāzes atgriežas biežāk, līdz tās iemācies.</p>
+    </details>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="screen" id="quiz" hidden>
+    <div class="qcard">
+      <div id="live">
+        <p class="kind" id="kind"></p>
+        <p class="prompt" id="prompt"></p>
+        <div id="area"></div>
+      </div>
+      <div id="review" hidden>
+        <span class="review-tag" id="rtag"></span>
+        <p class="kind" id="rkind"></p>
+        <p class="prompt" id="rprompt" style="margin-bottom:0"></p>
+      </div>
+    </div>
+    <div class="feedback" id="feedback" hidden>
+      <div class="row"><span class="res" id="res"></span><button class="say" type="button" id="say">🔊 Klausīties</button></div>
+      <div class="fr" id="ffr"></div>
+      <div class="lv" id="flv"></div>
+    </div>
+    <div class="nav" id="nav" hidden>
+      <button type="button" id="prev" aria-label="Iepriekšējais">←</button>
+      <button type="button" class="next" id="next">Tālāk</button>
+      <button type="button" id="fwd" aria-label="Uz priekšu">→</button>
+    </div>
+  </section>
+
+  <!-- RESIST -->
+  <section class="center screen" id="resist" hidden>
+    <div class="emoji">🌸</div>
+    <h2>Tu atturējies.</h2>
+    <p id="resistText"></p>
+    <a class="link primary" href="shortcuts://run-shortcut?name=NaktsGulet">Izslēgt ekrānu</a>
+    <button class="btn secondary" type="button" id="resistBack">Atpakaļ</button>
+  </section>
+
+  <!-- GAME OVER -->
+  <section class="center screen" id="over" hidden>
+    <div class="emoji">🥀</div>
+    <h2>Dzīvības beigušās.</h2>
+    <p>Prāta pauze vēl nav pabeigta. Varbūt tā ir zīme, ka šoreiz nevajag?</p>
+    <button class="btn primary" type="button" id="restart">Uz sākumu</button>
+    <a class="link secondary" href="shortcuts://run-shortcut?name=NaktsGulet">Izslēgt ekrānu</a>
+  </section>
+
+  <!-- WIN -->
+  <section class="center screen" id="win" hidden>
+    <p class="win-title"><span class="big">!!</span>Apsveicu!</p>
+    <p class="win-min" id="winText"></p>
+    <a class="link primary" id="unlock" href="#">Atbloķēt</a>
+    <a class="link secondary" href="shortcuts://run-shortcut?name=NaktsGulet">Tomēr izslēgt ekrānu</a>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</main>
+
+<!-- CLOWN -->
+<div class="clown-layer" id="clownLayer" hidden>
+  <div class="clown-head"><b id="clownCount">0 / 15</b><span id="clownWait"></span></div>
+  <button class="clown" type="button" id="clown" aria-label="Klauns">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="52" r="33" fill="#FFF6F0"/>
+      <ellipse cx="38" cy="44" rx="5" ry="7" fill="#fff" stroke="#2B2B2B" stroke-width="2"/>
+      <ellipse cx="62" cy="44" rx="5" ry="7" fill="#fff" stroke="#2B2B2B" stroke-width="2"/>
+      <circle cx="38" cy="46" r="2.6" fill="#2B2B2B"/>
+      <circle cx="62" cy="46" r="2.6" fill="#2B2B2B"/>
+      <circle cx="50" cy="58" r="8" fill="#D62839"/>
+      <circle cx="47.5" cy="55.5" r="2.2" fill="#fff" opacity=".7"/>
+      <path d="M33 68 Q50 84 67 68" fill="none" stroke="#D62839" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <span class="wait" id="clownNum"></span>
+  </button>
+  <button class="clown-cancel" type="button" id="clownCancel">Labāk atbildēšu uz jautājumiem</button>
+</div>
+
+<div class="confetti" id="confetti"></div>
+
+<script>
+(function () {
+  var MODES = {
+    short: { need: 3, minutes: 10,  shortcut: "NaktsAtbloket" },
+    long:  { need: 9, minutes: 180, shortcut: "NaktsAtbloket3h" },
+    clown: { need: 0, minutes: 540, shortcut: "NaktsAtbloket9h" }
+  };
+  var LIVES = 3, WAIT = 5, CLOWN_CLICKS = 15, CLOWN_WAIT = 5, BREATH_MS = 6000;
+
+  var phrases = [
+    ["J’aurais dû me coucher plus tôt.", "Man vajadzēja iet gulēt agrāk."],
+    ["Je n’arrive pas à dormir.", "Es nevaru aizmigt."],
+    ["Il me reste dix minutes.", "Man atlikušas desmit minūtes."],
+    ["Je n’en ai aucune idée.", "Man nav ne jausmas."],
+    ["Ça dépend de toi.", "Tas atkarīgs no tevis."],
+    ["Je suis d’accord avec toi.", "Es tev piekrītu."],
+    ["Il vaut mieux attendre.", "Labāk pagaidīt."],
+    ["Ça ne me dérange pas.", "Man tas netraucē."],
+    ["Tu pourrais répéter, s’il te plaît ?", "Vai tu varētu, lūdzu, atkārtot?"],
+    ["J’ai hâte de te voir.", "Nevaru sagaidīt, kad tevi redzēšu."],
+    ["Ça fait longtemps que j’attends.", "Es jau ilgi gaidu."],
+    ["Je n’ai pas le temps en ce moment.", "Man šobrīd nav laika."],
+    ["Qu’est-ce que tu en penses ?", "Ko tu par to domā?"],
+    ["À mon avis, c’est une bonne idée.", "Manuprāt, tā ir laba ideja."],
+    ["Je me rends compte que j’ai tort.", "Es saprotu, ka kļūdos."],
+    ["Il faut que je parte.", "Man jāiet."],
+    ["Ça m’est égal.", "Man vienalga."],
+    ["Je m’en occupe.", "Es par to parūpēšos."],
+    ["On se voit demain ?", "Tiekamies rīt?"],
+    ["Je suis en train de travailler.", "Es pašlaik strādāju."],
+    ["Ça vaut la peine d’essayer.", "Ir vērts pamēģināt."],
+    ["Je ne m’attendais pas à ça.", "To es negaidīju."],
+    ["Ça ne sert à rien.", "Tam nav jēgas."],
+    ["Ça m’a fait plaisir de te voir.", "Bija prieks tevi redzēt."],
+    ["Je me sens un peu fatigué.", "Es jūtos mazliet noguris."],
+    ["Je m’excuse pour le retard.", "Atvainojos par kavēšanos."],
+    ["Je me suis inscrit à un cours.", "Es pierakstījos kursā."],
+    ["Demain, je me lève tôt.", "Rīt es ceļos agri."],
+    ["Ça peut attendre demain.", "Tas var pagaidīt līdz rītam."],
+    ["Je vais me coucher.", "Es iešu gulēt."],
+    ["J’ai besoin de faire une pause.", "Man vajag paņemt pauzi."],
+    ["Je préfère lire un livre.", "Es labāk palasīšu grāmatu."],
+    ["Ça ne vaut pas le coup.", "Tas nav tā vērts."],
+    ["Je perds mon temps.", "Es tērēju savu laiku."],
+    ["Je vais y réfléchir.", "Es par to padomāšu."],
+    ["Ça me fait du bien.", "Tas man nāk par labu."]
+  ];
+
+  var grammar = [
+    ["Laiki · pagātne", "Hier, j’___ une pizza.", "ai mangé", ["mange", "vais manger", "mangé"], "Hier, j’ai mangé une pizza.", "Vakar es apēdu picu."],
+    ["Laiki · pagātne", "La semaine dernière, nous ___ à Riga.", "sommes allés", ["allons", "irons", "avons allés"], "La semaine dernière, nous sommes allés à Riga.", "Pagājušajā nedēļā mēs braucām uz Rīgu."],
+    ["Laiki · pagātne", "Hier soir, elle ___ tard.", "s’est couchée", ["se couche", "va se coucher", "a couchée"], "Hier soir, elle s’est couchée tard.", "Vakar vakarā viņa gāja gulēt vēlu."],
+    ["Laiki · tuvā nākotne", "Ce soir, tu ___ regarder un film ?", "vas", ["vais", "va", "as"], "Ce soir, tu vas regarder un film ?", "Vai šovakar tu skatīsies filmu?"],
+    ["Laiki · tuvā nākotne", "Demain, je ___ voir mes amis.", "vais", ["vas", "ai", "suis"], "Demain, je vais voir mes amis.", "Rīt es satikšu draugus."],
+    ["Laiki · tagadne", "Maintenant, il ___ un livre.", "lit", ["lis", "a lu", "lisons"], "Maintenant, il lit un livre.", "Tagad viņš lasa grāmatu."],
+    ["Laiki · tagadne", "Nous ___ français.", "parlons", ["parle", "parlez", "parlent"], "Nous parlons français.", "Mēs runājam franciski."],
+    ["Teikuma uzbūve · noliegums", "Kurš teikums ir pareizs?", "Je ne parle pas anglais.", ["Je parle ne pas anglais.", "Je ne parle anglais pas.", "Ne je parle pas anglais."], "Je ne parle pas anglais.", "Es nerunāju angliski."],
+    ["Teikuma uzbūve · jautājums", "Kurš teikums ir pareizs?", "Où est-ce que tu habites ?", ["Où tu est-ce que habites ?", "Est-ce où que tu habites ?", "Où habites est-ce que tu ?"], "Où est-ce que tu habites ?", "Kur tu dzīvo?"],
+    ["Teikuma uzbūve · īpašības vārds", "Kurš teikums ir pareizs?", "J’ai une voiture rouge.", ["J’ai une rouge voiture.", "J’ai rouge une voiture.", "J’ai voiture une rouge."], "J’ai une voiture rouge.", "Man ir sarkana mašīna."],
+    ["Teikuma uzbūve · īpašības vārds", "Kurš teikums ir pareizs?", "Il a un petit chien.", ["Il a un chien petit.", "Il a petit un chien.", "Il un petit chien a."], "Il a un petit chien.", "Viņam ir mazs suns."],
+    ["Teikuma uzbūve · vietniekvārds", "Kurš teikums ir pareizs?", "Comment tu t’appelles ?", ["Comment tu appelles te ?", "Comment t’appelles tu ?", "Tu comment t’appelles ?"], "Comment tu t’appelles ?", "Kā tevi sauc?"],
+    ["Skaitļi", "70", "soixante-dix", ["soixante-sept", "dix-sept", "sept-dix"], "70 = soixante-dix", "septiņdesmit (60 + 10)"],
+    ["Skaitļi", "80", "quatre-vingts", ["quatre-vingt-dix", "huit-dix", "quarante"], "80 = quatre-vingts", "astoņdesmit (4 × 20)"],
+    ["Skaitļi", "95", "quatre-vingt-quinze", ["quatre-vingt-cinq", "soixante-quinze", "quatre-vingt-dix-cinq"], "95 = quatre-vingt-quinze", "deviņdesmit pieci (4 × 20 + 15)"],
+    ["Skaitļi", "21", "vingt et un", ["vingt-deux", "deux-vingt", "douze"], "21 = vingt et un", "divdesmit viens"],
+    ["Skaitļi", "trois + quatre = ?", "sept", ["six", "huit", "douze"], "trois + quatre = sept", "trīs + četri = septiņi"],
+    ["Skaitļi · laiks", "15:30", "quinze heures trente", ["cinq heures trente", "quinze heures treize", "trente heures quinze"], "Il est quinze heures trente.", "Ir piecpadsmit trīsdesmit."]
+  ];
+
+  function rnd(n) { return Math.floor(Math.random() * n); }
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = rnd(i + 1); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function tokens(fr) { return fr.replace(/ ([?!:;])/g, "\u00a0$1").split(" "); }
+  function $(id) { return document.getElementById(id); }
+  function show(id, on) { $(id).hidden = !on; }
+  var SCREENS = ["breath", "start", "quiz", "resist", "over", "win"];
+  function go(id) { SCREENS.forEach(function (s) { show(s, s === id); }); window.scrollTo(0, 0); }
+
+  /* ---------- Saved data (per device) ---------- */
+  function load(key, fallback) { try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
+  function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+  function today() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  var stats = load("att_stats", { day: today(), resisted: 0, minutes: 0 });
+  if (stats.day !== today()) stats = { day: today(), resisted: 0, minutes: 0 };
+  var learned = load("att_learned", []);   // phrase indices answered correctly at least once
+  var missed = load("att_missed", []);     // phrase indices to repeat
+
+  function renderStats() {
+    $("sResist").textContent = stats.resisted;
+    $("sMin").textContent = stats.minutes;
+    $("sLearn").textContent = learned.length + "/" + phrases.length;
+  }
+
+  /* ---------- Speech ---------- */
+  var canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
+  function speak(text) {
+    if (!canSpeak) return;
+    try {
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "fr-FR"; u.rate = 0.9;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  if (!canSpeak) $("say").hidden = true;
+
+  /* ---------- Tasks ---------- */
+  var usedKeys = {};
+  function freshIndex(len, prefix) {
+    var tries = 0, i;
+    do { i = rnd(len); tries++; } while (usedKeys[prefix + i] && tries < 60);
+    usedKeys[prefix + i] = true;
+    return i;
+  }
+  function phraseIndex(prefix) {
+    var open = missed.filter(function (i) { return !usedKeys[prefix + i] && i < phrases.length; });
+    if (open.length && Math.random() < 0.5) { var i = open[rnd(open.length)]; usedKeys[prefix + i] = true; return i; }
+    return freshIndex(phrases.length, prefix);
+  }
+  function makeTask() {
+    var r = Math.random(), i, p;
+    if (r < 0.36) {
+      i = phraseIndex("b"); p = phrases[i];
+      return { type: "build", pi: i, kind: "Saliec teikumu · B1", prompt: p[1], toks: tokens(p[0]), fr: p[0], lv: p[1], say: p[0] };
+    }
+    if (r < 0.68) {
+      i = phraseIndex("m"); p = phrases[i];
+      var pool = phrases.filter(function (x) { return x[1] !== p[1]; }).map(function (x) { return x[1]; });
+      return { type: "choice", pi: i, kind: "Ko tas nozīmē? · B1", prompt: p[0], answer: p[1],
+               options: shuffle([p[1]].concat(shuffle(pool).slice(0, 3))), fr: p[0], lv: p[1], say: p[0] };
+    }
+    var g = grammar[freshIndex(grammar.length, "g")];
+    var plainNumber = g[0] === "Skaitļi";
+    return { type: "choice", pi: -1, kind: g[0] + " · A1", prompt: g[1], answer: g[2],
+             options: shuffle([g[2]].concat(g[3])), fr: g[4], lv: g[5], say: plainNumber ? g[2] : g[4] };
+  }
+
+  /* ---------- State ---------- */
+  var mode = null, correct = 0, lives = LIVES, history = [], task = null, reviewIdx = null, timer = null;
+
+  function renderStatus(hit) {
+    var h = "";
+    for (var i = 0; i < LIVES; i++) h += i < lives ? "♥" : "♡";
+    var el = $("hearts"); el.textContent = h;
+    if (hit) { el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit"); }
+    var bar = $("bar"), need = MODES[mode].need;
+    if (bar.children.length !== need) { bar.innerHTML = ""; for (var k = 0; k < need; k++) bar.appendChild(document.createElement("i")); }
+    for (var j = 0; j < need; j++) bar.children[j].classList.toggle("on", j < correct);
+  }
+
+  function startMode(m) {
+    mode = m; correct = 0; lives = LIVES; history = []; usedKeys = {}; reviewIdx = null;
+    if (m === "clown") { startClown(); return; }
+    go("quiz"); show("hearts", true); show("bar", true);
+    renderStatus(false);
+    nextTask();
+  }
+
+  function nextTask() {
+    clearInterval(timer);
+    reviewIdx = null;
+    show("review", false); show("live", true); show("feedback", false); show("nav", false);
+    task = makeTask();
+    $("kind").textContent = task.kind;
+    $("prompt").textContent = task.prompt;
+    var area = $("area"); area.innerHTML = "";
+    if (task.type === "build") renderBuild(area); else renderChoice(area);
+    window.scrollTo(0, 0);
+  }
+
+  function renderBuild(area) {
+    var built = document.createElement("div"); built.className = "built"; area.appendChild(built);
+    var chips = document.createElement("div"); chips.className = "chips"; area.appendChild(chips);
+    var pos = 0, placed = [], done = false;
+    shuffle(task.toks.slice()).forEach(function (t) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = t;
+      b.addEventListener("click", function () {
+        if (done) return;
+        if (t === task.toks[pos]) {
+          b.classList.add("used"); placed.push(t); pos++;
+          built.textContent = placed.join(" ");
+          if (pos === task.toks.length) { done = true; built.classList.add("full"); answered(true); }
+        } else {
+          done = true; b.classList.add("wrong");
+          built.textContent = task.fr; built.classList.add("full");
+          answered(false);
+        }
+      });
+      chips.appendChild(b);
+    });
+  }
+
+  function renderChoice(area) {
+    var box = document.createElement("div"); box.className = "opts"; area.appendChild(box);
+    var done = false;
+    task.options.forEach(function (o) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "opt"; b.textContent = o;
+      b.addEventListener("click", function () {
+        if (done) return;
+        done = true;
+        if (o === task.answer) { b.classList.add("right"); answered(true); }
+        else {
+          b.classList.add("wrong");
+          box.querySelectorAll(".opt").forEach(function (x) { if (x.textContent === task.answer) x.classList.add("right"); });
+          answered(false);
+        }
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function remember(ok) {
+    if (task.pi < 0) return;
+    var at = missed.indexOf(task.pi);
+    if (ok) {
+      if (at !== -1) missed.splice(at, 1);
+      if (learned.indexOf(task.pi) === -1) learned.push(task.pi);
+    } else if (at === -1) { missed.push(task.pi); }
+    save("att_missed", missed); save("att_learned", learned);
+  }
+
+  function answered(ok) {
+    if (ok) correct++; else lives--;
+    remember(ok);
+    history.push({ kind: task.kind, prompt: task.prompt, fr: task.fr, lv: task.lv, say: task.say, ok: ok });
+    renderStatus(!ok);
+    showFeedback(history[history.length - 1]);
+    show("nav", true);
+    var finished = correct >= MODES[mode].need && lives > 0;
+    var label = finished ? "Pabeigt" : "Tālāk";
+    var next = $("next"), left = WAIT;
+    next.disabled = true; next.textContent = label + " (" + left + ")";
+    clearInterval(timer);
+    timer = setInterval(function () {
+      left--;
+      if (left <= 0) { clearInterval(timer); next.disabled = false; next.textContent = label; }
+      else next.textContent = label + " (" + left + ")";
+    }, 1000);
+    updateArrows();
+  }
+
+  var shownItem = null;
+  function showFeedback(h) {
+    shownItem = h;
+    show("feedback", true);
+    var res = $("res");
+    res.textContent = h.ok ? "Pareizi" : "Nepareizi · −1 dzīvība";
+    res.className = "res " + (h.ok ? "ok" : "no");
+    $("ffr").textContent = h.fr;
+    $("flv").textContent = h.lv;
+  }
+  $("say").addEventListener("click", function () { if (shownItem) speak(shownItem.say); });
+
+  function updateArrows() {
+    var idx = reviewIdx === null ? history.length - 1 : reviewIdx;
+    $("prev").disabled = idx <= 0;
+    $("fwd").disabled = reviewIdx === null;
+  }
+  function openReview(i) {
+    reviewIdx = i;
+    var h = history[i];
+    show("live", false); show("review", true);
+    $("rtag").textContent = "Jautājums " + (i + 1) + " no " + history.length;
+    $("rkind").textContent = h.kind;
+    $("rprompt").textContent = h.prompt;
+    showFeedback(h);
+    updateArrows();
+  }
+  function closeReview() {
+    reviewIdx = null;
+    show("review", false); show("live", true);
+    showFeedback(history[history.length - 1]);
+    updateArrows();
+  }
+  $("prev").addEventListener("click", function () {
+    var from = reviewIdx === null ? history.length - 1 : reviewIdx;
+    if (from > 0) openReview(from - 1);
+  });
+  $("fwd").addEventListener("click", function () {
+    if (reviewIdx === null) return;
+    if (reviewIdx + 1 >= history.length - 1) closeReview(); else openReview(reviewIdx + 1);
+  });
+  $("next").addEventListener("click", function () {
+    if (lives <= 0) { gameOver(); return; }
+    if (correct >= MODES[mode].need) { win(); return; }
+    nextTask();
+  });
+
+  function hideStatus() { show("hearts", false); show("bar", false); }
+
+  function gameOver() {
+    hideStatus(); go("over");
+    var b = $("restart"), left = WAIT;
+    b.disabled = true; b.textContent = "Uz sākumu (" + left + ")";
+    var t = setInterval(function () {
+      left--;
+      if (left <= 0) { clearInterval(t); b.disabled = false; b.textContent = "Uz sākumu"; }
+      else b.textContent = "Uz sākumu (" + left + ")";
+    }, 1000);
+  }
+  $("restart").addEventListener("click", toStart);
+
+  function win() {
+    var m = MODES[mode];
+    hideStatus(); show("clownLayer", false); go("win");
+    stats.minutes += m.minutes; save("att_stats", stats);
+    $("winText").textContent = "Tu esi nopelnījis " + m.minutes + " minūtes prāta atpūtai.";
+    $("unlock").href = "shortcuts://run-shortcut?name=" + encodeURIComponent(m.shortcut);
+    confetti(90);
+  }
+
+  function confetti(n) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var box = $("confetti"), colors = ["#F6C3D1", "#F7D6A8", "#BFE3C9", "#BCD7F5", "#D9C2F0", "#E58BA6"];
+    box.innerHTML = "";
+    for (var i = 0; i < n; i++) {
+      var c = document.createElement("i");
+      c.style.left = Math.random() * 100 + "vw";
+      c.style.background = colors[rnd(colors.length)];
+      c.style.animationDuration = (2.2 + Math.random() * 2.2) + "s";
+      c.style.animationDelay = (Math.random() * 0.8) + "s";
+      box.appendChild(c);
+    }
+    setTimeout(function () { box.innerHTML = ""; }, 5600);
+  }
+
+  /* ---------- Start & resist ---------- */
+  function toStart() {
+    var h = new Date().getHours(), hello, sub;
+    if (h >= 22 || h < 6) { hello = "Ir vēls."; sub = "Miegs arī ir atpūta. Vai tiešām vajag?"; }
+    else if (h < 12) { hello = "Labrīt."; sub = "Vai tiešām vajag, vai tas ir tikai ieradums?"; }
+    else if (h < 18) { hello = "Pauze."; sub = "Vai tiešām vajag, vai tas ir tikai ieradums?"; }
+    else { hello = "Labvakar."; sub = "Vai tiešām vajag, vai tas ir tikai ieradums?"; }
+    $("hello").textContent = hello; $("helloSub").textContent = sub;
+    renderStats(); hideStatus(); go("start");
+  }
+  $("resistBtn").addEventListener("click", function () {
+    stats.resisted++; save("att_stats", stats);
+    $("resistText").textContent = stats.resisted === 1
+      ? "Šodien pirmo reizi. Šis brīdis pieder tev."
+      : "Šodien jau " + stats.resisted + ". reizi. Šis brīdis pieder tev.";
+    go("resist"); confetti(40);
+  });
+  $("resistBack").addEventListener("click", toStart);
+  document.querySelectorAll(".mode").forEach(function (b) {
+    b.addEventListener("click", function () { startMode(b.getAttribute("data-mode")); });
+  });
+
+  /* ---------- Clown ---------- */
+  var clownCount = 0, clownTimer = null;
+  var clownColors = ["#FF5C7A", "#FFB347", "#4CC38A", "#5B9DFF", "#B57BFF", "#FFC93C", "#FF7AD9", "#2EC4B6"];
+  var clownLines = ["Klauns vēl guļ…", "Tiešām?", "Frāzes būtu ātrāk.", "Klauns tevi vēro.", "Vēl tālu…", "Varbūt tomēr nevajag?",
+    "Puse gandrīz ir.", "Klauns nogurst.", "Tu esi neatlaidīgs.", "Vēl mazliet.", "Klauns nopūšas.", "Gandrīz.", "Vēl trīs.", "Vēl divi.", "Pēdējais!"];
+  function placeClown(first) {
+    var c = $("clown"), size = 108, top = 120, bottom = 90;
+    var w = window.innerWidth, h = window.innerHeight;
+    c.style.left = (12 + Math.random() * Math.max(1, w - size - 24)) + "px";
+    c.style.top = (top + Math.random() * Math.max(1, h - size - top - bottom)) + "px";
+    c.style.setProperty("--clown", first ? "#E63946" : clownColors[rnd(clownColors.length)]);
+  }
+  function lockClown() {
+    var c = $("clown"), num = $("clownNum"), left = CLOWN_WAIT;
+    c.disabled = true; num.textContent = left;
+    $("clownWait").textContent = clownLines[Math.min(clownCount, clownLines.length - 1)];
+    clearInterval(clownTimer);
+    clownTimer = setInterval(function () {
+      left--;
+      if (left <= 0) { clearInterval(clownTimer); c.disabled = false; num.textContent = ""; }
+      else num.textContent = left;
+    }, 1000);
+  }
+  function startClown() {
+    clownCount = 0;
+    $("clownCount").textContent = "0 / " + CLOWN_CLICKS;
+    show("clownLayer", true);
+    placeClown(true); lockClown();
+  }
+  $("clown").addEventListener("click", function () {
+    clownCount++;
+    $("clownCount").textContent = clownCount + " / " + CLOWN_CLICKS;
+    if (clownCount >= CLOWN_CLICKS) { clearInterval(clownTimer); win(); return; }
+    placeClown(false); lockClown();
+  });
+  $("clownCancel").addEventListener("click", function () {
+    clearInterval(clownTimer); show("clownLayer", false); toStart();
+  });
+
+  /* ---------- Breath intro ---------- */
+  setTimeout(function () { $("breathText").textContent = "Izelpo…"; }, BREATH_MS / 2);
+  setTimeout(toStart, BREATH_MS);
+
+  function clock() {
+    var d = new Date();
+    $("foot").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  clock(); setInterval(clock, 30000);
+})();
+</script>
+</body>
+</html>
