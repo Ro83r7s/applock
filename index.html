@@ -254,7 +254,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--text); outline-
     <div class="emoji">🌸</div>
     <h2>Tu atturējies.</h2>
     <p id="resistText"></p>
-    <a class="link primary" href="shortcuts://run-shortcut?name=NaktsGulet">Izslēgt ekrānu</a>
+    <a class="link primary" href="shortcuts://run-shortcut?name=Sleep">Izslēgt ekrānu</a>
     <button class="btn secondary" type="button" id="resistBack">Atpakaļ</button>
   </section>
 
@@ -264,7 +264,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--text); outline-
     <h2>Dzīvības beigušās.</h2>
     <p>Prāta pauze vēl nav pabeigta. Varbūt tā ir zīme, ka šoreiz nevajag?</p>
     <button class="btn primary" type="button" id="restart">Uz sākumu</button>
-    <a class="link secondary" href="shortcuts://run-shortcut?name=NaktsGulet">Izslēgt ekrānu</a>
+    <a class="link secondary" href="shortcuts://run-shortcut?name=Sleep">Izslēgt ekrānu</a>
   </section>
 
   <!-- WIN -->
@@ -272,7 +272,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--text); outline-
     <p class="win-title"><span class="big">!!</span>Apsveicu!</p>
     <p class="win-min" id="winText"></p>
     <a class="link primary" id="unlock" href="#">Atbloķēt</a>
-    <a class="link secondary" href="shortcuts://run-shortcut?name=NaktsGulet">Tomēr izslēgt ekrānu</a>
+    <a class="link secondary" href="shortcuts://run-shortcut?name=Sleep">Tomēr izslēgt ekrānu</a>
   </section>
 
   <p class="foot" id="foot"></p>
@@ -302,9 +302,9 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--text); outline-
 <script>
 (function () {
   var MODES = {
-    short: { need: 3, minutes: 10,  shortcut: "NaktsAtbloket" },
-    long:  { need: 9, minutes: 180, shortcut: "NaktsAtbloket3h" },
-    clown: { need: 0, minutes: 540, shortcut: "NaktsAtbloket9h" }
+    short: { need: 3, minutes: 10,  shortcut: "Open10" },
+    long:  { need: 9, minutes: 180, shortcut: "Open3h" },
+    clown: { need: 0, minutes: 540, shortcut: "Open9h" }
   };
   var LIVES = 3, WAIT = 5, CLOWN_CLICKS = 15, CLOWN_WAIT = 5, BREATH_MS = 6000;
 
